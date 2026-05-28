@@ -1,0 +1,48 @@
+name: DeathRace
+version: 1.1.0
+main: id.deathrace.DeathRace
+api-version: '1.21'
+description: Plugin Death Race - berlomba untuk mati dengan cara yang berbeda-beda!
+authors: [aflahal]
+
+commands:
+  regis:
+    description: Register player ke game
+    usage: /regis <playername>
+    permission: deathrace.admin
+  unregis:
+    description: Unregister player dari game
+    usage: /unregis <playername>
+    permission: deathrace.admin
+  listplayer:
+    description: Lihat daftar semua player dan score
+    usage: /listplayer
+    permission: deathrace.admin
+  startsolo:
+    description: Start game mode solo (death list per player)
+    usage: /startsolo
+    permission: deathrace.admin
+  startglobal:
+    description: Start game mode global (death list shared)
+    usage: /startglobal
+    permission: deathrace.admin
+  listdeath:
+    description: Lihat daftar cara mati yang sudah dipakai
+    usage: /listdeath
+    permission: deathrace.use
+  stopgame:
+    description: Stop game dan tampilkan ranking akhir
+    usage: /stopgame
+    permission: deathrace.admin
+  settimer:
+    description: Set durasi ronde (default 5 menit). Contoh -> /settimer 300 atau /settimer 5m
+    usage: /settimer [detik|<angka>m]
+    permission: deathrace.admin
+
+permissions:
+  deathrace.admin:
+    description: Admin permissions for DeathRace
+    default: op
+  deathrace.use:
+    description: Player permissions for DeathRace
+    default: true
