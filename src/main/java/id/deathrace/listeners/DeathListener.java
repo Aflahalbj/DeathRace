@@ -43,6 +43,8 @@ public class DeathListener implements Listener {
     public DeathListener(DeathRace plugin, GameManager gm) {
         this.plugin = plugin;
         this.gm = gm;
+        startSpiderFearTask();
+        startFearMobTask();
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -143,37 +145,6 @@ public class DeathListener implements Listener {
                 }
                 return "TNT";
 
-            case PROJECTILE:
-
-                if (player.getLastDamageCause()
-                        instanceof EntityDamageByEntityEvent edmg) {
-
-                    Entity damager = edmg.getDamager();
-
-                    // arrow
-                    if (damager instanceof Arrow
-                            || damager instanceof SpectralArrow) {
-
-                        return "ARROW";
-                    }
-
-                    // trident
-                    if (damager instanceof Trident) {
-
-                        return "TRIDENT";
-                    }
-
-                    if (damager instanceof SmallFireball sf) {
-
-                        // dispenser / item fire charge
-                        if (!(sf.getShooter() instanceof Blaze)) {
-                            return "FIRE_CHARGE";
-                        }
-                    }
-                }
-
-                return null;
-
             case ENTITY_EXPLOSION:
                 if (player.getLastDamageCause() instanceof EntityDamageByEntityEvent edmg) {
                     if (edmg.getDamager() instanceof Creeper) return "CREEPER";
@@ -231,9 +202,6 @@ public class DeathListener implements Listener {
 
                 return "MAGMA";
 
-            case MAGIC:
-                return "MAGIC";
-
             case FREEZE:
                 return "FREEZE";
 
@@ -264,6 +232,142 @@ public class DeathListener implements Listener {
 
             case THORNS:
                 return "THORNS";
+
+            case ENTITY_ATTACK:
+            case PROJECTILE:
+            case MAGIC:
+
+                if (player.getLastDamageCause()
+                        instanceof EntityDamageByEntityEvent edmg) {
+
+                    Entity damager = edmg.getDamager();
+
+                    // ARROW 😭
+                    if (damager instanceof Arrow
+                            || damager instanceof SpectralArrow) {
+
+                        if (damager instanceof Projectile projectile
+                                && projectile.getShooter() instanceof Entity shooter) {
+
+                            Bukkit.broadcast(
+                                    Component.text(
+                                            "Shooter = "
+                                            + shooter.getType()
+                                            + " | "
+                                            + shooter.getClass().getName()
+                                    )
+                            );
+
+                            // mob arrows
+                            switch (shooter.getType().name()) {
+
+                                case "PARCHED":
+                                    return "PARCHED";
+
+                                case "BOGGED":
+                                    return "BOGGED";
+
+                                case "STRAY":
+                                    return "STRAY";
+
+                                case "PILLAGER":
+                                    return "PILLAGER";
+
+                                case "PIGLIN":
+                                    return "PIGLIN";
+
+                                case "SKELETON":
+                                    return "SKELETON";
+                            }
+                        }
+
+                        // arrow biasa/dispenser/player
+                        return "ARROW";
+                    }
+
+                    // TRIDENT 😭
+                    if (damager instanceof Trident trident) {
+
+                        if (trident.getShooter() instanceof Drowned) {
+                            return "DROWNED";
+                        }
+
+                        return "TRIDENT";
+                    }
+
+                    // FIRE CHARGE / BLAZE 😭
+                    if (damager instanceof SmallFireball sf) {
+
+                        if (sf.getShooter() instanceof Blaze) {
+                            return "BLAZE";
+                        }
+
+                        return "FIRE_CHARGE";
+                    }
+
+                    // GHAST FIREBALL 😭
+                    if (damager instanceof Fireball fireball) {
+
+                        if (fireball.getShooter() instanceof Ghast) {
+                            return "GHAST";
+                        }
+                    }
+
+                    // BREEZE 😭
+                    if (damager instanceof WindCharge wc) {
+
+                        if (wc.getShooter() instanceof Breeze) {
+                            return "BREEZE";
+                        }
+                    }
+
+                    // EVOKER FANGS 😭
+                    if (damager instanceof EvokerFangs fangs) {
+
+                        if (fangs.getOwner() instanceof Evoker) {
+                            return "EVOKER";
+                        }
+                    }
+
+                    // WITCH POTION 😭
+                    if (damager instanceof ThrownPotion potion) {
+
+                        if (potion.getShooter() instanceof Witch) {
+                            return "WITCH";
+                        }
+                    }
+
+                    // projectile shooter generic 😭
+                    if (damager instanceof Projectile projectile
+                            && projectile.getShooter() instanceof Entity shooter) {
+
+                        damager = shooter;
+                    }
+
+                    // END CRYSTAL 😭
+                    if (damager instanceof EnderCrystal) {
+                        return "END_CRYSTAL";
+                    }
+
+                    // PLAYER jangan 😭
+                    if (damager instanceof Player) {
+                        return null;
+                    }
+
+                    return damager.getType().name();
+                }
+
+                return null;
+                
+            case POISON:
+                if (player.getLastDamageCause() instanceof EntityDamageByEntityEvent edmg) {
+                    Entity damager = edmg.getDamager();
+                    if (damager instanceof Bee) return "BEE";
+                    if (damager instanceof CaveSpider) return "CAVE_SPIDER";
+                    if (damager instanceof Spider) return "SPIDER";
+                    if (damager instanceof IronGolem) return "IRON_GOLEM";
+                }
+                return null;
 
             default:
                 return null;
@@ -457,13 +561,18 @@ public class DeathListener implements Listener {
                     Entity damager = edmg.getDamager();
 
                     // ARROW
-                    if ((damager instanceof Arrow
-                            || damager instanceof SpectralArrow)
-                            && gm.isDeathUsed(player, "ARROW")) {
+                    if (damager instanceof Arrow
+                            || damager instanceof SpectralArrow) {
 
-                        event.setCancelled(true);
+                        Projectile projectile = (Projectile) damager;
 
-                        damager.remove();
+                        // hanya dispenser / arrow tanpa mob
+                        if (!(projectile.getShooter() instanceof Mob)
+                                && gm.isDeathUsed(player, "ARROW")) {
+
+                            event.setCancelled(true);
+                            damager.remove();
+                        }
 
                         player.getWorld().spawnParticle(
                                 Particle.CRIT,
@@ -484,12 +593,20 @@ public class DeathListener implements Listener {
                     }
 
                     // TRIDENT
-                    else if (damager instanceof Trident
-                            && gm.isDeathUsed(player, "TRIDENT")) {
+                    else if (damager instanceof Trident trident) {
 
-                        event.setCancelled(true);
+                        if (trident.getShooter() instanceof Drowned) {
 
-                        damager.remove();
+                            if (gm.isDeathUsed(player, "DROWNED")) {
+                                event.setCancelled(true);
+                                damager.remove();
+                            }
+
+                        } else if (gm.isDeathUsed(player, "TRIDENT")) {
+
+                            event.setCancelled(true);
+                            damager.remove();
+                        }
 
                         player.getWorld().spawnParticle(
                                 Particle.SPLASH,
@@ -512,6 +629,62 @@ public class DeathListener implements Listener {
                     else if (damager instanceof SmallFireball sf
                             && !(sf.getShooter() instanceof Blaze)
                             && gm.isDeathUsed(player, "FIRE_CHARGE")) {
+
+                        event.setCancelled(true);
+
+                        damager.remove();
+
+                        player.setFireTicks(0);
+
+                        player.getWorld().spawnParticle(
+                                Particle.SMOKE,
+                                player.getLocation().add(0, 1, 0),
+                                15,
+                                0.3,
+                                0.3,
+                                0.3,
+                                0.03
+                        );
+
+                        player.playSound(
+                                player.getLocation(),
+                                Sound.BLOCK_FIRE_EXTINGUISH,
+                                1.0f,
+                                1.2f
+                        );
+                    }
+
+                    else if (damager instanceof Fireball fireball
+                            && fireball.getShooter() instanceof Ghast
+                            && gm.isDeathUsed(player, "GHAST")) {
+
+                        event.setCancelled(true);
+
+                        damager.remove();
+
+                        player.setFireTicks(0);
+
+                        player.getWorld().spawnParticle(
+                                Particle.SMOKE,
+                                player.getLocation().add(0, 1, 0),
+                                15,
+                                0.3,
+                                0.3,
+                                0.3,
+                                0.03
+                        );
+
+                        player.playSound(
+                                player.getLocation(),
+                                Sound.BLOCK_FIRE_EXTINGUISH,
+                                1.0f,
+                                1.2f
+                        );
+                    }
+
+                    else if (damager instanceof SmallFireball sf
+                            && sf.getShooter() instanceof Blaze
+                            && gm.isDeathUsed(player, "BLAZE")) {
 
                         event.setCancelled(true);
 
@@ -763,6 +936,91 @@ public class DeathListener implements Listener {
                 }
                 break;
             default:
+                // HOSTILE MOB FEAR IMMUNITY 😭
+                if (event instanceof EntityDamageByEntityEvent mobEvt
+                        && mobEvt.getDamager() instanceof Mob mob) {
+
+                    // spider udah punya handler sendiri
+                    if (!(mob instanceof Spider)) {
+
+                        String key = mob.getType().name();
+
+                        if (gm.isDeathUsed(player, key)) {
+
+                            event.setCancelled(true);
+
+                            mob.setTarget(null);
+
+                            // PUFFERFISH jangan ngembang 😭
+                            if (mob instanceof PufferFish puffer) {
+                                puffer.setPuffState(0);
+                            }
+
+                            // GHAST stop charge 😭
+                            if (mob instanceof Ghast ghast) {
+                                ghast.setCharging(false);
+                            }
+
+                            return;
+                        }
+                    }
+                }
+                // BEE
+                if (event instanceof EntityDamageByEntityEvent edmgBee
+                        && edmgBee.getDamager() instanceof Bee bee
+                        && gm.isDeathUsed(player, "BEE")) {
+                    event.setCancelled(true);
+                    // Bee ngehadap player dan kasih madu
+                    bee.setTarget(null);
+                    bee.lookAt(player);
+                    bee.setAnger(0);
+                    Location honeyLoc = player.getLocation().add(0, 1, 0);
+                    player.getWorld().spawnParticle(
+                            Particle.DRIPPING_HONEY,
+                            player.getLocation().add(0, 1, 0),
+                            35,
+                            0.4,
+                            0.5,
+                            0.4,
+                            0.02
+                    );
+
+                    player.getWorld().spawnParticle(
+                            Particle.FALLING_HONEY,
+                            player.getLocation().add(0, 1, 0),
+                            20,
+                            0.3,
+                            0.4,
+                            0.3,
+                            0.01
+                    );
+
+                    player.playSound(
+                            bee.getLocation(),
+                            Sound.ITEM_HONEY_BOTTLE_DRINK,
+                            1.0f,
+                            1.2f
+                    );
+                    player.getWorld().spawnParticle(Particle.WAX_ON, honeyLoc, 20, 0.4, 0.5, 0.4, 0.05);
+                    player.getWorld().playSound(bee.getLocation(), Sound.ENTITY_BEE_POLLINATE, 1.0f, 1.0f);
+                    // player.sendMessage(Component.text("🍯 Bee damai sama kamu dan ngasih madu!", NamedTextColor.YELLOW));
+                    break;
+                }
+                // CAVE_SPIDER / SPIDER — damage dealt to player (malam hari = spider menyerang)
+                if (event instanceof EntityDamageByEntityEvent edmgSpider) {
+                    Entity sp = edmgSpider.getDamager();
+                    String spKey = (sp instanceof CaveSpider) ? "CAVE_SPIDER" : (sp instanceof Spider) ? "SPIDER" : null;
+                    if (spKey != null && gm.isDeathUsed(player, spKey)) {
+                        event.setCancelled(true);
+                    }
+                }
+                // IRON_GOLEM
+                if (event instanceof EntityDamageByEntityEvent edmgGolem
+                        && edmgGolem.getDamager() instanceof IronGolem golem
+                        && gm.isDeathUsed(player, "IRON_GOLEM")) {
+                    event.setCancelled(true);
+                    golemGiveFlower(golem, player);
+                }
                 break;
         }
     }
@@ -827,7 +1085,7 @@ public class DeathListener implements Listener {
 
         Location loc = crystal.getLocation();
 
-        loc.getWorld().spawnParticle(Particle.EXPLOSION, loc, 5, 0.5, 0.5, 0.5, 0);
+        loc.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, loc, 5, 0.5, 0.5, 0.5, 0);
         loc.getWorld().spawnParticle(Particle.END_ROD, loc, 60, 1.2, 1.2, 1.2, 0.25);
         loc.getWorld().spawnParticle(Particle.DRAGON_BREATH, loc, 50, 1.0, 1.0, 1.0, 0.05);
         loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.5f, 0.8f);
@@ -1362,6 +1620,466 @@ public class DeathListener implements Listener {
 
         if (player.getFoodLevel() <= 1) {
             feedPlayer(player);
+        }
+    }
+
+    // ========== PLAYER HITS MOB ==========
+    private final Set<EntityType> fearfulMobs = Set.of(
+
+        EntityType.PIGLIN,
+        EntityType.PUFFERFISH,
+        EntityType.BLAZE,
+        EntityType.BOGGED,
+        EntityType.BREEZE,
+
+        EntityType.ELDER_GUARDIAN,
+
+        EntityType.ENDERMITE,
+        EntityType.EVOKER,
+        EntityType.GHAST,
+        EntityType.GUARDIAN,
+        EntityType.HOGLIN,
+        EntityType.HUSK,
+        EntityType.MAGMA_CUBE,
+
+        EntityType.PIGLIN_BRUTE,
+        EntityType.PILLAGER,
+        EntityType.RAVAGER,
+
+        EntityType.SILVERFISH,
+        EntityType.SKELETON,
+        EntityType.SLIME,
+        EntityType.STRAY,
+        EntityType.VEX,
+        EntityType.VINDICATOR,
+        EntityType.WARDEN,
+        EntityType.WITCH,
+
+        EntityType.WITHER_SKELETON,
+        EntityType.ZOGLIN,
+        EntityType.ZOMBIE,
+        EntityType.ZOMBIE_VILLAGER
+    );
+    // Set untuk throttle spider flee agar tidak spam tiap tick
+    private final Set<UUID> fleeingSpiders = new HashSet<>();
+    // Set untuk throttle golem flower agar tidak spam
+    private final Set<UUID> golemCooldown = new HashSet<>();
+
+    /**
+     * Event: player mukul entity (bee / cave spider / spider / iron golem / villager)
+     * Dihandle via EntityDamageByEntityEvent dengan damager = player
+     */
+    @EventHandler(priority = EventPriority.NORMAL)
+    public void onPlayerHitMob(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Player player)) return;
+        if (!gm.isRunning() || !gm.isRegistered(player)) return;
+
+        Entity target = event.getEntity();
+
+        // === BEE: player mukul bee, player sudah pernah mati sama bee ===
+        if (target instanceof Bee bee && gm.isDeathUsed(player, "BEE")) {
+            event.setCancelled(true); // cancel damage, bee damai
+            bee.setAnger(0);
+            bee.setTarget(null);
+            // Bee ngehadap player
+            bee.lookAt(player);
+            player.getWorld().spawnParticle(
+                    Particle.DRIPPING_HONEY,
+                    player.getLocation().add(0, 1, 0),
+                    35,
+                    0.4,
+                    0.5,
+                    0.4,
+                    0.02
+            );
+
+            player.getWorld().spawnParticle(
+                    Particle.FALLING_HONEY,
+                    player.getLocation().add(0, 1, 0),
+                    20,
+                    0.3,
+                    0.4,
+                    0.3,
+                    0.01
+            );
+
+            player.playSound(
+                    bee.getLocation(),
+                    Sound.ITEM_HONEY_BOTTLE_DRINK,
+                    1.0f,
+                    1.2f
+            );
+            player.getWorld().spawnParticle(Particle.WAX_ON, bee.getLocation().add(0, 1, 0), 15, 0.3, 0.3, 0.3, 0.02);
+            player.getWorld().playSound(bee.getLocation(), Sound.ENTITY_BEE_POLLINATE, 1.0f, 1.0f);
+            player.sendMessage(Component.text("🍯 Bee sayang sama kamu dan ngasih madu!", NamedTextColor.YELLOW));
+            return;
+        }
+
+        // === CAVE SPIDER (siang): mukul → spawn cobweb ===
+        if (target instanceof CaveSpider caveSpider && gm.isDeathUsed(player, "CAVE_SPIDER")) {
+            boolean isDaytime = player.getWorld().getTime() < 13000;
+            if (isDaytime) {
+                event.setCancelled(true);
+                spawnCobwebAround(caveSpider.getLocation());
+                player.getWorld().playSound(caveSpider.getLocation(), Sound.BLOCK_COBWEB_PLACE, 1.0f, 0.8f);
+                player.sendMessage(Component.text("🕸️ Cave Spider panik dan ngeluarin cobweb!", NamedTextColor.GRAY));
+                return;
+            }
+        }
+
+        // === SPIDER (siang): mukul → spawn cobweb ===
+        if (target instanceof Spider spider && !(target instanceof CaveSpider) && gm.isDeathUsed(player, "SPIDER")) {
+            boolean isDaytime = player.getWorld().getTime() < 13000;
+            if (isDaytime) {
+                event.setCancelled(true);
+                spawnCobwebAround(spider.getLocation());
+                player.getWorld().playSound(spider.getLocation(), Sound.BLOCK_COBWEB_PLACE, 1.0f, 0.8f);
+                player.sendMessage(Component.text("🕸️ Spider panik dan ngeluarin cobweb!", NamedTextColor.GRAY));
+                return;
+            }
+        }
+
+        // === IRON GOLEM: player mukul iron golem ===
+        if (target instanceof IronGolem golem && gm.isDeathUsed(player, "IRON_GOLEM")) {
+            event.setCancelled(true);
+            golemGiveFlower(golem, player);
+            return;
+        }
+
+    }
+
+    @EventHandler
+    public void onGolemTarget(EntityTargetLivingEntityEvent event) {
+
+        if (!(event.getEntity() instanceof IronGolem)) return;
+
+        if (!(event.getTarget() instanceof Player player)) return;
+
+        if (!gm.isRunning() || !gm.isRegistered(player)) return;
+
+        if (!gm.isDeathUsed(player, "IRON_GOLEM")) return;
+
+        // golem jadi baik 😭
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onProjectileLaunch(ProjectileLaunchEvent event) {
+
+        if (!(event.getEntity().getShooter() instanceof Mob mob))
+            return;
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+
+            if (!gm.isRegistered(player))
+                continue;
+
+            String key = mob.getType().name();
+
+            if (!gm.isDeathUsed(player, key))
+                continue;
+
+            if (mob.getLocation().distance(player.getLocation()) <= 20) {
+
+                event.setCancelled(true);
+                return;
+            }
+        }
+    }
+
+    public void startFearMobTask() {
+
+        new BukkitRunnable() {
+
+            @Override
+            public void run() {
+
+                if (!gm.isRunning()) return;
+
+                for (Player player : Bukkit.getOnlinePlayers()) {
+
+                    if (!gm.isRegistered(player)) continue;
+
+                    for (Entity e : player.getWorld().getNearbyEntities(
+                            player.getLocation(),
+                            17,
+                            8,
+                            17
+                    )) {
+
+                        if (!(e instanceof Mob mob)) continue;
+
+                        // spider udah punya task sendiri
+                        if (mob instanceof Spider) continue;
+
+                        String key = mob.getType().name();
+
+                        if (!gm.isDeathUsed(player, key)) continue;
+
+                        double distance = mob.getLocation()
+                                .distance(player.getLocation());
+
+                        // cuma pas udah aggro range 😭
+                        if (distance > 16) continue;
+
+                        // stop target
+                        mob.setTarget(null);
+
+                        // PUFFERFISH jangan ngembang 😭
+                        if (mob instanceof PufferFish puffer) {
+                            puffer.setPuffState(0);
+                        }
+
+                        // GHAST stop charge 😭
+                        if (mob instanceof Ghast ghast) {
+                            ghast.setCharging(false);
+                        }
+
+                        if (mob.getTarget() != null) {
+                            mob.setTarget(null);
+                        }
+
+                        // SLIME & MAGMA CUBE
+                        if (mob instanceof Slime slime) {
+
+                            slime.addPotionEffect(
+                                    new PotionEffect(
+                                            PotionEffectType.JUMP_BOOST,
+                                            20,
+                                            5,
+                                            false,
+                                            false
+                                    )
+                            );
+                        }
+
+                        Location mobLoc = mob.getLocation();
+
+                        Vector away = mobLoc.toVector()
+                                .subtract(player.getLocation().toVector())
+                                .normalize();
+
+                        Location targetLoc = mobLoc.clone().add(
+                                away.getX() * 10,
+                                0,
+                                away.getZ() * 10
+                        );
+
+                        // jalan natural 😭
+                        mob.getPathfinder().moveTo(targetLoc);
+                        // VEX 😭
+                        if (mob instanceof Vex vex) {
+
+                            Vector vexAway = targetLoc.toVector()
+                                    .subtract(vex.getLocation().toVector())
+                                    .normalize()
+                                    .multiply(0.7);
+
+                            vex.setVelocity(vexAway);
+                        }
+                        mob.lookAt(targetLoc);
+
+                        mob.addPotionEffect(
+                                new PotionEffect(
+                                        PotionEffectType.SPEED,
+                                        20,
+                                        2,
+                                        false,
+                                        false
+                                )
+                        );
+                    }
+                }
+
+            }
+
+        }.runTaskTimer(plugin, 0L, 2L);
+    }
+
+    public void startSpiderFearTask() {
+
+        new BukkitRunnable() {
+
+            @Override
+            public void run() {
+
+                if (!gm.isRunning()) return;
+
+                for (Player player : Bukkit.getOnlinePlayers()) {
+
+                    if (!gm.isRegistered(player)) continue;
+
+                    boolean isNight =
+                            player.getWorld().getTime() >= 13000;
+
+                    if (!isNight) continue;
+
+                    for (Entity e : player.getWorld().getNearbyEntities(
+                            player.getLocation(),
+                            17,
+                            8,
+                            17
+                    )) {
+
+                        if (!(e instanceof Spider spider)) continue;
+
+                        boolean isCave =
+                                spider instanceof CaveSpider;
+
+                        String key = isCave
+                                ? "CAVE_SPIDER"
+                                : "SPIDER";
+
+                        if (!gm.isDeathUsed(player, key)) continue;
+
+                        double distance = spider.getLocation()
+                                .distance(player.getLocation());
+
+                        // cuma pas udah aggro range 😭
+                        if (distance > 16) continue;
+
+                        spider.setTarget(null);
+
+                        Location spiderLoc = spider.getLocation();
+
+                        Vector away = spiderLoc.toVector()
+                                .subtract(player.getLocation().toVector())
+                                .normalize();
+
+                        Location targetLoc = spiderLoc.clone().add(
+                                away.getX() * 10,
+                                0,
+                                away.getZ() * 10
+                        );
+
+                        spider.getPathfinder().moveTo(targetLoc);
+
+                        spider.addPotionEffect(
+                                new PotionEffect(
+                                        PotionEffectType.SPEED,
+                                        20,
+                                        2,
+                                        false,
+                                        false
+                                )
+                        );
+                    }
+                }
+            }
+
+        }.runTaskTimer(plugin, 0L, 10L);
+    }
+
+    /**
+     * Helper: Iron Golem ngehadap player, jalan ke player, dan kasih bunga poppy + chat
+     */
+    private void golemGiveFlower(IronGolem golem, Player player) {
+
+        if (golemCooldown.contains(golem.getUniqueId())) return;
+
+        golemCooldown.add(golem.getUniqueId());
+
+        // stop marah 😭
+        golem.setTarget(null);
+
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (golem.isValid()) {
+                golem.setTarget(null);
+            }
+        }, 1L);
+
+        // animasi vanilla kasih bunga
+        golem.playEffect(EntityEffect.IRON_GOLEM_ROSE);
+
+        // hati
+        golem.getWorld().spawnParticle(
+                Particle.HEART,
+                golem.getLocation().add(0, 2, 0),
+                5,
+                0.3,
+                0.3,
+                0.3,
+                0.1
+        );
+
+        // kasih bunga
+        ItemStack flower = new ItemStack(Material.POPPY, 1);
+
+        if (player.getInventory().firstEmpty() != -1) {
+            player.getInventory().addItem(flower);
+        } else {
+            player.getWorld().dropItemNaturally(
+                    player.getLocation(),
+                    flower
+            );
+        }
+
+        Bukkit.broadcast(
+                Component.text(
+                        "<Iron Golem> ngapain lu pukul-pukul, nih bunga buat lu"
+                )
+        );
+
+        // lock ngeliatin player 😭
+        new BukkitRunnable() {
+
+            int ticksElapsed = 0;
+
+            @Override
+            public void run() {
+
+                if (!golem.isValid()
+                        || !player.isOnline()
+                        || ticksElapsed >= 60) {
+
+                    cancel();
+                    return;
+                }
+
+                Location golemEye = golem.getEyeLocation();
+                Location playerEye = player.getEyeLocation();
+
+                Vector direction = playerEye.toVector()
+                        .subtract(golemEye.toVector());
+
+                golem.teleport(
+                        golem.getLocation().setDirection(direction)
+                );
+
+                ticksElapsed++;
+            }
+
+        }.runTaskTimer(plugin, 0L, 1L);
+
+        // cooldown
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                golemCooldown.remove(golem.getUniqueId());
+            }
+        }.runTaskLater(plugin, 60L);
+    }
+
+    /**
+     * Helper: spawn cobweb di sekitar lokasi spider
+     */
+    private void spawnCobwebAround(Location loc) {
+        // Coba pasang cobweb di blok kosong di sekitar spider (radius 1, y same)
+        int placed = 0;
+        for (int dx = -1; dx <= 1 && placed < 3; dx++) {
+            for (int dz = -1; dz <= 1 && placed < 3; dz++) {
+                Block b = loc.clone().add(dx, 0, dz).getBlock();
+                if (b.getType() == Material.AIR) {
+                    b.setType(Material.COBWEB);
+                    placed++;
+                    // Hapus cobweb setelah 5 detik biar ga permanen
+                    new BukkitRunnable() {
+                        @Override public void run() {
+                            if (b.getType() == Material.COBWEB) b.setType(Material.AIR);
+                        }
+                    }.runTaskLater(plugin, 100L);
+                }
+            }
         }
     }
 
