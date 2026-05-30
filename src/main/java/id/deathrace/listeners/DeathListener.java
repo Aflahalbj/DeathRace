@@ -251,7 +251,7 @@ public class DeathListener implements Listener {
 
                     Entity damager = edmg.getDamager();
 
-                    // ARROW 😭
+                    // ARROW 
                     if (damager instanceof Arrow
                             || damager instanceof SpectralArrow) {
 
@@ -294,7 +294,7 @@ public class DeathListener implements Listener {
                         return "ARROW";
                     }
 
-                    // TRIDENT 😭
+                    // TRIDENT 
                     if (damager instanceof Trident trident) {
 
                         if (trident.getShooter() instanceof Drowned) {
@@ -304,7 +304,7 @@ public class DeathListener implements Listener {
                         return "TRIDENT";
                     }
 
-                    // FIRE CHARGE / BLAZE 😭
+                    // FIRE CHARGE / BLAZE 
                     if (damager instanceof SmallFireball sf) {
 
                         if (sf.getShooter() instanceof Blaze) {
@@ -314,7 +314,7 @@ public class DeathListener implements Listener {
                         return "FIRE_CHARGE";
                     }
 
-                    // GHAST FIREBALL 😭
+                    // GHAST FIREBALL 
                     if (damager instanceof Fireball fireball) {
 
                         if (fireball.getShooter() instanceof Ghast) {
@@ -322,7 +322,7 @@ public class DeathListener implements Listener {
                         }
                     }
 
-                    // BREEZE 😭
+                    // BREEZE
                     if (damager instanceof WindCharge wc) {
 
                         if (wc.getShooter() instanceof Breeze) {
@@ -330,7 +330,7 @@ public class DeathListener implements Listener {
                         }
                     }
 
-                    // EVOKER FANGS 😭
+                    // EVOKER FANGS
                     if (damager instanceof EvokerFangs fangs) {
 
                         if (fangs.getOwner() instanceof Evoker) {
@@ -338,7 +338,7 @@ public class DeathListener implements Listener {
                         }
                     }
 
-                    // WITCH POTION 😭
+                    // WITCH POTION
                     if (damager instanceof ThrownPotion potion) {
 
                         if (potion.getShooter() instanceof Witch) {
@@ -346,19 +346,19 @@ public class DeathListener implements Listener {
                         }
                     }
 
-                    // projectile shooter generic 😭
+                    // projectile shooter generic
                     if (damager instanceof Projectile projectile
                             && projectile.getShooter() instanceof Entity shooter) {
 
                         damager = shooter;
                     }
 
-                    // END CRYSTAL 😭
+                    // END CRYSTAL
                     if (damager instanceof EnderCrystal) {
                         return "END_CRYSTAL";
                     }
 
-                    // PLAYER jangan 😭
+                    // PLAYER jangan
                     if (damager instanceof Player) {
                         return null;
                     }
@@ -502,7 +502,7 @@ public class DeathListener implements Listener {
 
                     player.sendMessage(
                             Component.text(
-                                    "🍓 Tidak bisa mati dengan buah ceri lagi!",
+                                    "🍓 Tidak bisa mati dengan berry lagi!",
                                     NamedTextColor.RED
                             )
                     );
@@ -1000,7 +1000,7 @@ public class DeathListener implements Listener {
                 }
                 break;
             default:
-                // HOSTILE MOB FEAR IMMUNITY 😭
+                // HOSTILE MOB FEAR IMMUNITY
                 if (event instanceof EntityDamageByEntityEvent mobEvt
                         && mobEvt.getDamager() instanceof Mob mob) {
 
@@ -1015,12 +1015,12 @@ public class DeathListener implements Listener {
 
                             mob.setTarget(null);
 
-                            // PUFFERFISH jangan ngembang 😭
+                            // PUFFERFISH jangan ngembang
                             if (mob instanceof PufferFish puffer) {
                                 puffer.setPuffState(0);
                             }
 
-                            // GHAST stop charge 😭
+                            // GHAST stop charge
                             if (mob instanceof Ghast ghast) {
                                 ghast.setCharging(false);
                             }
@@ -1329,7 +1329,7 @@ public class DeathListener implements Listener {
 
         if (harmful.contains(newEffect.getType())) {
 
-            // jangan cancel kalau dari witch 😭
+            // jangan cancel kalau dari witch
             if (witchPotionVictims.contains(player.getUniqueId())) {
                 return;
             }
@@ -1563,7 +1563,7 @@ public class DeathListener implements Listener {
                     return;
                 }
 
-                // partikel kaki 😭
+                // partikel kaki
                 player.getWorld().spawnParticle(
                         Particle.CLOUD,
                         player.getLocation().add(0, 0.1, 0),
@@ -1916,7 +1916,7 @@ public class DeathListener implements Listener {
                     .normalize()
                     .dot(toEnderman);
 
-            // semakin mendekati 1 = semakin tepat ditatap 😭
+            // semakin mendekati 1 = semakin tepat ditatap
             if (dot < 0.97)
                 continue;
 
@@ -1952,7 +1952,7 @@ public class DeathListener implements Listener {
 
         if (!gm.isDeathUsed(player, "IRON_GOLEM")) return;
 
-        // golem jadi baik 😭
+        // golem jadi baik
         event.setCancelled(true);
     }
 
@@ -2027,7 +2027,7 @@ public class DeathListener implements Listener {
 
         LivingEntity mob = (LivingEntity) llama;
 
-        // matiin AI dulu 😭
+        // matiin AI dulu
         mob.setAI(false);
 
         // paksa nengok ke player
@@ -2106,7 +2106,7 @@ public class DeathListener implements Listener {
                             0
                     );
 
-                    // kena player 😭
+                    // kena player
                     if (point.distanceSquared(player.getEyeLocation()) < 0.8) {
 
                         point.getWorld().spawnParticle(
@@ -2262,18 +2262,19 @@ public class DeathListener implements Listener {
                         double distance = mob.getLocation()
                                 .distance(player.getLocation());
 
-                        // cuma pas udah aggro range 😭
+                        // cuma pas udah aggro range
                         if (distance > 16) continue;
 
                         // stop target
                         mob.setTarget(null);
 
-                        // PUFFERFISH jangan ngembang 😭
+                        // PUFFERFISH jangan ngembang
                         if (mob instanceof PufferFish puffer) {
                             puffer.setPuffState(0);
+                            puffer.setSilent(true);
                         }
 
-                        // GHAST stop charge 😭
+                        // GHAST stop charge
                         if (mob instanceof Ghast ghast) {
                             ghast.setCharging(false);
                         }
@@ -2313,9 +2314,9 @@ public class DeathListener implements Listener {
                                 away.getZ() * 10
                         );
 
-                        // jalan natural 😭
+                        // jalan natural
                         mob.getPathfinder().moveTo(targetLoc);
-                        // VEX 😭
+                        // VEX
                         if (mob instanceof Vex vex) {
 
                             Vector vexAway = targetLoc.toVector()
@@ -2383,7 +2384,7 @@ public class DeathListener implements Listener {
                         double distance = spider.getLocation()
                                 .distance(player.getLocation());
 
-                        // cuma pas udah aggro range 😭
+                        // cuma pas udah aggro range
                         if (distance > 16) continue;
 
                         spider.setTarget(null);
@@ -2427,7 +2428,7 @@ public class DeathListener implements Listener {
 
         golemCooldown.add(golem.getUniqueId());
 
-        // stop marah 😭
+        // stop marah
         golem.setTarget(null);
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -2468,7 +2469,7 @@ public class DeathListener implements Listener {
                 )
         );
 
-        // lock ngeliatin player 😭
+        // lock ngeliatin player
         new BukkitRunnable() {
 
             int ticksElapsed = 0;
