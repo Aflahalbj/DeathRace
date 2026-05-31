@@ -1084,6 +1084,41 @@ public class DeathListener implements Listener {
                     event.setCancelled(true);
                     golemGiveFlower(golem, player);
                 }
+                if (event instanceof EntityDamageByEntityEvent edmg
+                        && edmg.getDamager() instanceof PolarBear
+                        && gm.isDeathUsed(player, "POLAR_BEAR")) {
+
+                    event.setCancelled(true);
+                }
+
+                if (event instanceof EntityDamageByEntityEvent edmgWolf
+                        && edmgWolf.getDamager() instanceof Wolf wolf
+                        && gm.isDeathUsed(player, "WOLF")) {
+
+                    event.setCancelled(true);
+
+                    wolf.setTarget(null);
+
+                    wolf.setSitting(true);
+
+                    wolf.lookAt(player);
+
+                    return;
+                }
+
+                if (event instanceof EntityDamageByEntityEvent edmgPanda
+                        && edmgPanda.getDamager() instanceof Panda panda
+                        && gm.isDeathUsed(player, "PANDA")) {
+
+                    event.setCancelled(true);
+
+                    panda.lookAt(player);
+
+                    panda.setRolling(true);
+
+                    return;
+                }
+
                 break;
         }
     }
@@ -1421,11 +1456,11 @@ public class DeathListener implements Listener {
         chicken.setSilent(true);
         chicken.setInvulnerable(true);
         player.addPassenger(chicken);
-        Bukkit.broadcast(
-            Component.text(
-                "<Chicken> " + player.getName() + " berat banget jirr"
-            )
-        );
+        // Bukkit.broadcast(
+        //     Component.text(
+        //         "<Chicken> " + player.getName() + " berat banget jirr"
+        //     )
+        // );
 
         new BukkitRunnable() {
 
@@ -1879,6 +1914,39 @@ public class DeathListener implements Listener {
         if (target instanceof IronGolem golem && gm.isDeathUsed(player, "IRON_GOLEM")) {
             event.setCancelled(true);
             golemGiveFlower(golem, player);
+            return;
+        }
+
+        if (target instanceof Wolf wolf
+                && gm.isDeathUsed(player, "WOLF")) {
+
+            event.setCancelled(true);
+
+            wolf.setTarget(null);
+
+            wolf.setSitting(true);
+
+            wolf.lookAt(player);
+
+            return;
+        }
+
+        if (target instanceof Panda panda
+                && gm.isDeathUsed(player, "PANDA")) {
+
+            event.setCancelled(true);
+
+            panda.lookAt(player);
+
+            panda.setRolling(true);
+
+            panda.getWorld().playSound(
+                    panda.getLocation(),
+                    Sound.ENTITY_PANDA_PRE_SNEEZE,
+                    1f,
+                    1.2f
+            );
+
             return;
         }
 

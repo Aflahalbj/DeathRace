@@ -42,6 +42,9 @@ public class DeathKeys {
         DEATH_DISPLAY.put("CAVE_SPIDER",        "🕷️ Cave Spider");
         DEATH_DISPLAY.put("SPIDER",             "🕸️ Spider");
         DEATH_DISPLAY.put("IRON_GOLEM",         "🌹 Iron Golem");
+        DEATH_DISPLAY.put("POLAR_BEAR",         "🐻 Polar Bear");
+        DEATH_DISPLAY.put("WOLF",               "🐺 Wolf");
+        DEATH_DISPLAY.put("PANDA",              "🐼 Panda");
         DEATH_DISPLAY.put("LLAMA",              "🦙 Llama");
         DEATH_DISPLAY.put("TRADER_LLAMA",       "🦙 Trader Llama");
         DEATH_DISPLAY.put("PIGLIN",             "🐷 Piglin");
@@ -62,28 +65,28 @@ public class DeathKeys {
         DEATH_DISPLAY.put("MAGMA_CUBE",         "🟥 Magma Cube");
         DEATH_DISPLAY.put("PARCHED",            "🥵 Parched");
 
-        DEATH_DISPLAY.put("PIGLIN_BRUTE",     "🪓 Piglin Brute");
-        DEATH_DISPLAY.put("PILLAGER",         "🏹 Pillager");
-        DEATH_DISPLAY.put("RAVAGER",          "🐂 Ravager");
+        DEATH_DISPLAY.put("PIGLIN_BRUTE",       "🪓 Piglin Brute");
+        DEATH_DISPLAY.put("PILLAGER",           "🏹 Pillager");
+        DEATH_DISPLAY.put("RAVAGER",            "🐂 Ravager");
 
-        DEATH_DISPLAY.put("SILVERFISH",       "🐛 Silverfish");
-        DEATH_DISPLAY.put("SKELETON",         "💀 Skeleton");
-        DEATH_DISPLAY.put("SLIME",            "🟢 Slime");
-        DEATH_DISPLAY.put("STRAY",            "❄️ Stray");
-        DEATH_DISPLAY.put("VEX",              "👻 Vex");
-        DEATH_DISPLAY.put("VINDICATOR",       "🪓 Vindicator");
-        DEATH_DISPLAY.put("WARDEN",           "🔊 Warden");
-        DEATH_DISPLAY.put("WITCH",            "🧪 Witch");
+        DEATH_DISPLAY.put("SILVERFISH",         "🐛 Silverfish");
+        DEATH_DISPLAY.put("SKELETON",           "💀 Skeleton");
+        DEATH_DISPLAY.put("SLIME",              "🟢 Slime");
+        DEATH_DISPLAY.put("STRAY",              "❄️ Stray");
+        DEATH_DISPLAY.put("VEX",                "👻 Vex");
+        DEATH_DISPLAY.put("VINDICATOR",         "🪓 Vindicator");
+        DEATH_DISPLAY.put("WARDEN",             "🔊 Warden");
+        DEATH_DISPLAY.put("WITCH",              "🧪 Witch");
 
-        DEATH_DISPLAY.put("WITHER_SKELETON",  "☠️ Wither Skeleton");
-        DEATH_DISPLAY.put("ZOGLIN",           "🧟🐗 Zoglin");
-        DEATH_DISPLAY.put("ZOMBIE",           "🧟 Zombie");
-        DEATH_DISPLAY.put("ZOMBIE_VILLAGER",  "🧟 Villager Zombie");
-        DEATH_DISPLAY.put("ZOMBIFIED_PIGLIN", "🐷 Zombified Piglin");
-        DEATH_DISPLAY.put("ENDER_DRAGON", "🐉 Ender Dragon");
-        DEATH_DISPLAY.put("SHULKER", "🐚 Shulker");
-        DEATH_DISPLAY.put("PHANTOM", "👻 Phantom");
-        DEATH_DISPLAY.put("WITHER", "☠️ Wither");
+        DEATH_DISPLAY.put("WITHER_SKELETON",    "☠️ Wither Skeleton");
+        DEATH_DISPLAY.put("ZOGLIN",             "🧟🐗 Zoglin");
+        DEATH_DISPLAY.put("ZOMBIE",             "🧟 Zombie");
+        DEATH_DISPLAY.put("ZOMBIE_VILLAGER",    "🧟 Villager Zombie");
+        DEATH_DISPLAY.put("ZOMBIFIED_PIGLIN",   "🐷 Zombified Piglin");
+        DEATH_DISPLAY.put("ENDER_DRAGON",       "🐉 Ender Dragon");
+        DEATH_DISPLAY.put("SHULKER",            "🐚 Shulker");
+        DEATH_DISPLAY.put("PHANTOM",            "👻 Phantom");
+        DEATH_DISPLAY.put("WITHER",             "☠️ Wither");
     }
 
     public static String getDisplay(String key) {
