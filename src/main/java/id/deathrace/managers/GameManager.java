@@ -6,6 +6,8 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+// import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -29,8 +31,17 @@ public class GameManager {
     // GLOBAL: death causes used by anyone
     private final Set<String> globalUsedDeaths = new HashSet<>();
 
+    // SOLO: Map<deathKey, List<UUID>> — siapa aja yang udah mati dari death itu
+    private final Map<String, List<UUID>> soloDeathKillers = new HashMap<>();
+    // GLOBAL: Map<deathKey, UUID> — siapa yang pertama mati dari death itu
+    private final Map<String, UUID> globalDeathKiller = new HashMap<>();
+
+    // Border info (diset saat /start)
+    private Location borderCenter = null;
+    private double borderSize = 10000;
+
     // Timer
-    private int roundDurationSeconds = 300; // default 5 minutes
+    private int roundDurationSeconds = 300;
     private int timeRemainingSeconds = 0;
     private BukkitRunnable timerTask = null;
     private BossBar bossBar = null;
@@ -52,17 +63,21 @@ public class GameManager {
         registeredPlayers.remove(player.getUniqueId());
         scores.remove(player.getUniqueId());
         soloUsedDeaths.remove(player.getUniqueId());
-        if (bossBar != null) {
-            bossBar.removeViewer(player);
-        }
+        if (bossBar != null) bossBar.removeViewer(player);
         return true;
     }
 
-    public void startGame(GameMode gameMode) {
+    public void startGame(GameMode gameMode, Location center, double size) {
         this.mode = gameMode;
         this.state = GameState.RUNNING;
+        this.borderCenter = center;
+        this.borderSize = size;
+
         soloUsedDeaths.clear();
         globalUsedDeaths.clear();
+        soloDeathKillers.clear();
+        globalDeathKiller.clear();
+
         for (UUID uuid : registeredPlayers) {
             scores.put(uuid, 0);
             soloUsedDeaths.put(uuid, new HashSet<>());
@@ -74,29 +89,23 @@ public class GameManager {
         this.state = GameState.WAITING;
         globalUsedDeaths.clear();
         soloUsedDeaths.clear();
+        soloDeathKillers.clear();
+        globalDeathKiller.clear();
         stopTimer();
     }
 
-    public void setRoundDuration(int seconds) {
-        this.roundDurationSeconds = seconds;
-    }
-
-    public int getRoundDurationSeconds() {
-        return roundDurationSeconds;
-    }
+    public void setRoundDuration(int seconds) { this.roundDurationSeconds = seconds; }
+    public int getRoundDurationSeconds() { return roundDurationSeconds; }
+    public Location getBorderCenter() { return borderCenter; }
+    public double getBorderSize() { return borderSize; }
 
     private void startTimer() {
         timeRemainingSeconds = roundDurationSeconds;
 
-        // Create boss bar
         bossBar = BossBar.bossBar(
-                buildBossBarTitle(),
-                1.0f,
-                BossBar.Color.GREEN,
-                BossBar.Overlay.PROGRESS
+                buildBossBarTitle(), 1.0f, BossBar.Color.GREEN, BossBar.Overlay.PROGRESS
         );
 
-        // Show to all registered players
         for (UUID uuid : registeredPlayers) {
             Player p = Bukkit.getPlayer(uuid);
             if (p != null) p.showBossBar(bossBar);
@@ -105,33 +114,23 @@ public class GameManager {
         timerTask = new BukkitRunnable() {
             @Override
             public void run() {
-                if (!isRunning()) {
-                    cancel();
-                    return;
-                }
+                if (!isRunning()) { cancel(); return; }
 
                 timeRemainingSeconds--;
 
                 if (timeRemainingSeconds <= 0) {
-                    // Time's up!
                     cancel();
                     hideBossBar();
                     announceTimeUp();
                     return;
                 }
 
-                // Update boss bar
                 float progress = (float) timeRemainingSeconds / roundDurationSeconds;
                 bossBar.progress(Math.max(0f, Math.min(1f, progress)));
 
-                // Update color based on time left
-                if (progress > 0.5f) {
-                    bossBar.color(BossBar.Color.GREEN);
-                } else if (progress > 0.25f) {
-                    bossBar.color(BossBar.Color.YELLOW);
-                } else {
-                    bossBar.color(BossBar.Color.RED);
-                }
+                if (progress > 0.5f) bossBar.color(BossBar.Color.GREEN);
+                else if (progress > 0.25f) bossBar.color(BossBar.Color.YELLOW);
+                else bossBar.color(BossBar.Color.RED);
 
                 bossBar.name(buildBossBarTitle());
             }
@@ -145,8 +144,7 @@ public class GameManager {
         String timeStr = String.format("%d:%02d", minutes, seconds);
 
         float progress = roundDurationSeconds > 0
-                ? (float) timeRemainingSeconds / roundDurationSeconds
-                : 1f;
+                ? (float) timeRemainingSeconds / roundDurationSeconds : 1f;
 
         NamedTextColor color;
         if (progress > 0.5f) color = NamedTextColor.GREEN;
@@ -154,17 +152,14 @@ public class GameManager {
         else color = NamedTextColor.RED;
 
         return Component.text()
-                .append(Component.text("☠ LOMBA MATI ", NamedTextColor.WHITE, TextDecoration.BOLD))
+                .append(Component.text("☠ DEATH RACE ", NamedTextColor.WHITE, TextDecoration.BOLD))
                 .append(Component.text("| ", NamedTextColor.DARK_GRAY))
                 .append(Component.text("⏱ " + timeStr, color, TextDecoration.BOLD))
                 .build();
     }
 
     private void stopTimer() {
-        if (timerTask != null) {
-            timerTask.cancel();
-            timerTask = null;
-        }
+        if (timerTask != null) { timerTask.cancel(); timerTask = null; }
         hideBossBar();
         timeRemainingSeconds = 0;
     }
@@ -180,14 +175,10 @@ public class GameManager {
     }
 
     public void showBossBarToPlayer(Player player) {
-        if (bossBar != null && isRunning()) {
-            player.showBossBar(bossBar);
-        }
+        if (bossBar != null && isRunning()) player.showBossBar(bossBar);
     }
 
-    // Ganti method announceTimeUp() di GameManager.java dengan ini:
     private void announceTimeUp() {
-        // Build ranking
         List<Map.Entry<UUID, Integer>> sorted = new ArrayList<>(scores.entrySet());
         sorted.sort((a, b) -> b.getValue() - a.getValue());
 
@@ -206,41 +197,30 @@ public class GameManager {
                     : rank == 3 ? NamedTextColor.GOLD
                     : NamedTextColor.WHITE;
             Bukkit.broadcast(Component.text(
-                    "  " + medal + " " + name + " — " + entry.getValue() + " poin",
-                    rankColor
+                    "  " + medal + " " + name + " — " + entry.getValue() + " poin", rankColor
             ));
             rank++;
         }
-        Bukkit.broadcast(Component.text("  ══════════════════════", NamedTextColor.GOLD));
+        Bukkit.broadcast(Component.text("  ═══════════════════════", NamedTextColor.GOLD));
         Bukkit.broadcast(Component.text("  Gunakan /startsolo atau /startglobal untuk ronde baru!", NamedTextColor.AQUA));
         Bukkit.broadcast(Component.text(""));
 
-        // REVISI: Reset score player ke 0, clear data list mati
-        for (UUID uuid : registeredPlayers) {
-            scores.put(uuid, 0);
-        }
+        for (UUID uuid : registeredPlayers) scores.put(uuid, 0);
         this.state = GameState.WAITING;
         globalUsedDeaths.clear();
         soloUsedDeaths.clear();
+        soloDeathKillers.clear();
+        globalDeathKiller.clear();
     }
 
-    public boolean isRunning() {
-        return state == GameState.RUNNING;
-    }
-
-    public boolean isRegistered(Player player) {
-        return registeredPlayers.contains(player.getUniqueId());
-    }
-
+    public boolean isRunning() { return state == GameState.RUNNING; }
+    public boolean isRegistered(Player player) { return registeredPlayers.contains(player.getUniqueId()); }
     public GameMode getMode() { return mode; }
     public GameState getState() { return state; }
     public Set<UUID> getRegisteredPlayers() { return Collections.unmodifiableSet(registeredPlayers); }
     public Map<UUID, Integer> getScores() { return Collections.unmodifiableMap(scores); }
     public int getTimeRemainingSeconds() { return timeRemainingSeconds; }
 
-    /**
-     * Check if a death cause is already used for a given player (depending on mode).
-     */
     public boolean isDeathUsed(Player player, String deathKey) {
         if (mode == GameMode.GLOBAL) {
             return globalUsedDeaths.contains(deathKey);
@@ -250,14 +230,13 @@ public class GameManager {
         }
     }
 
-    /**
-     * Record a death cause as used and award point.
-     */
     public void recordDeath(Player player, String deathKey) {
         if (mode == GameMode.GLOBAL) {
             globalUsedDeaths.add(deathKey);
+            globalDeathKiller.putIfAbsent(deathKey, player.getUniqueId());
         } else {
             soloUsedDeaths.computeIfAbsent(player.getUniqueId(), k -> new HashSet<>()).add(deathKey);
+            soloDeathKillers.computeIfAbsent(deathKey, k -> new ArrayList<>()).add(player.getUniqueId());
         }
         scores.merge(player.getUniqueId(), 1, Integer::sum);
     }
@@ -266,9 +245,6 @@ public class GameManager {
         return scores.getOrDefault(player.getUniqueId(), 0);
     }
 
-    /**
-     * Get the list of used death keys for display.
-     */
     public Set<String> getUsedDeaths(Player player) {
         if (mode == GameMode.GLOBAL) {
             return Collections.unmodifiableSet(globalUsedDeaths);
@@ -277,9 +253,6 @@ public class GameManager {
         }
     }
 
-    /**
-     * Mark a death cause as used WITHOUT awarding a point (e.g. for WORLD_BORDER).
-     */
     public void markDeathUsed(Player player, String deathKey) {
         if (mode == GameMode.GLOBAL) {
             globalUsedDeaths.add(deathKey);
@@ -288,27 +261,40 @@ public class GameManager {
         }
     }
 
-    public Set<String> getGlobalUsedDeaths() {
-        return Collections.unmodifiableSet(globalUsedDeaths);
-    }
+    public Set<String> getGlobalUsedDeaths() { return Collections.unmodifiableSet(globalUsedDeaths); }
 
-    /**
-     * Unregister by UUID (for offline players).
-     */
     public void unregisterByUUID(UUID uuid) {
         registeredPlayers.remove(uuid);
         scores.remove(uuid);
         soloUsedDeaths.remove(uuid);
     }
 
-    /**
-     * Get used deaths by UUID — for display purposes (e.g. offline player in console command).
-     */
     public Set<String> getUsedDeaths(Player player, UUID uuid) {
         if (player != null) return getUsedDeaths(player);
-        if (mode == GameMode.GLOBAL) {
-            return Collections.unmodifiableSet(globalUsedDeaths);
-        }
+        if (mode == GameMode.GLOBAL) return Collections.unmodifiableSet(globalUsedDeaths);
         return Collections.unmodifiableSet(soloUsedDeaths.getOrDefault(uuid, new HashSet<>()));
+    }
+
+    // ── /listdeathall helpers ──────────────────────────────────────────────────
+
+    /**
+     * SOLO: berapa banyak player yang udah mati dari deathKey ini
+     */
+    public List<UUID> getSoloDeathKillers(String deathKey) {
+        return Collections.unmodifiableList(soloDeathKillers.getOrDefault(deathKey, new ArrayList<>()));
+    }
+
+    /**
+     * GLOBAL: siapa player pertama yang mati dari deathKey ini (null = belum ada)
+     */
+    public UUID getGlobalDeathKiller(String deathKey) {
+        return globalDeathKiller.get(deathKey);
+    }
+
+    /**
+     * SOLO: berapa player yang udah pakai death ini (untuk sorting)
+     */
+    public int getSoloDeathCount(String deathKey) {
+        return soloDeathKillers.getOrDefault(deathKey, Collections.emptyList()).size();
     }
 }

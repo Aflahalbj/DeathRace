@@ -1,8 +1,8 @@
 name: DeathRace
-version: 1.1.0
+version: 1.2.0
 main: id.deathrace.DeathRace
 api-version: '1.21'
-description: Plugin Death Race - berlomba untuk mati dengan cara yang berbeda-beda!
+description: Plugin Death Race - berlomba untuk mati dengan cara yang berbeda!
 authors: [aflahal]
 
 commands:
@@ -30,6 +30,10 @@ commands:
     description: Lihat daftar cara mati yang sudah dipakai
     usage: /listdeath
     permission: deathrace.use
+  listdeathall:
+    description: Lihat semua death key (sudah dan belum dipakai) + info siapa yang mati
+    usage: /listdeathall
+    permission: deathrace.admin
   stopgame:
     description: Stop game dan tampilkan ranking akhir
     usage: /stopgame
@@ -37,6 +41,10 @@ commands:
   settimer:
     description: Set durasi ronde (default 5 menit). Contoh -> /settimer 300 atau /settimer 5m
     usage: /settimer [detik|<angka>m]
+    permission: deathrace.admin
+  maxhealth:
+    description: Set atau lihat max health player. /maxhealth, /maxhealth <hp>, /maxhealth <player> <hp>
+    usage: /maxhealth [player] [hp]
     permission: deathrace.admin
 
 permissions:
@@ -46,3 +54,4 @@ permissions:
   deathrace.use:
     description: Player permissions for DeathRace
     default: true
+  

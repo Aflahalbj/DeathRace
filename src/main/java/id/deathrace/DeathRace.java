@@ -32,8 +32,10 @@ public class DeathRace extends JavaPlugin {
         getCommand("startsolo").setExecutor(cmdHandler);
         getCommand("startglobal").setExecutor(cmdHandler);
         getCommand("listdeath").setExecutor(cmdHandler);
+        getCommand("listdeathall").setExecutor(cmdHandler);
         getCommand("stopgame").setExecutor(cmdHandler);
         getCommand("settimer").setExecutor(cmdHandler);
+        getCommand("maxhealth").setExecutor(cmdHandler);
 
         // Hunger tick: check every second (20 ticks) for low hunger players
         new BukkitRunnable() {

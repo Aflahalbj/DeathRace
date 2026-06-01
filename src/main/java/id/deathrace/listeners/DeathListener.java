@@ -76,12 +76,6 @@ public class DeathListener implements Listener {
             deathKey = mapCauseToKey(player, cause);
         }
 
-        // DEBUG - hapus setelah fix
-        plugin.getLogger().warning("[DEBUG] " + player.getName() + " mati | cause=" + cause + " | deathKey=" + deathKey
-            + " | blockFeet=" + player.getLocation().getBlock().getType()
-            + " | blockBelow=" + player.getLocation().clone().subtract(0,1,0).getBlock().getType()
-            + " | recentCampfire=" + recentCampfireBurn.contains(player.getUniqueId()));
-
         if (deathKey == null) return;
 
         if (!gm.isDeathUsed(player, deathKey)) {
@@ -102,13 +96,6 @@ public class DeathListener implements Listener {
 
     private String mapCauseToKey(Player player, EntityDamageEvent.DamageCause cause) {
         if (cause == null) return null;
-
-        Bukkit.broadcast(
-                Component.text(
-                        "[DEBUG] Cause = " + cause,
-                        NamedTextColor.RED
-                )
-        );
 
         switch (cause) {
             case CONTACT:
@@ -258,15 +245,6 @@ public class DeathListener implements Listener {
                         if (damager instanceof Projectile projectile
                                 && projectile.getShooter() instanceof Entity shooter) {
 
-                            Bukkit.broadcast(
-                                    Component.text(
-                                            "Shooter = "
-                                            + shooter.getType()
-                                            + " | "
-                                            + shooter.getClass().getName()
-                                    )
-                            );
-
                             // mob arrows
                             switch (shooter.getType().name()) {
 
@@ -384,33 +362,12 @@ public class DeathListener implements Listener {
                 return "MAGIC";
                 
             case POISON:
-                Bukkit.broadcast(
-                        Component.text(
-                                "[DEBUG] MASUK POISON",
-                                NamedTextColor.YELLOW
-                        )
-                );
                 if (player.getLastDamageCause() instanceof EntityDamageByEntityEvent edmg) {
                     Entity damager = edmg.getDamager();
                     if (damager instanceof Bee) return "BEE";
                     if (damager instanceof CaveSpider) return "CAVE_SPIDER";
                     if (damager instanceof Spider) return "SPIDER";
                     if (damager instanceof IronGolem) return "IRON_GOLEM";
-                }
-                if (player.getLastDamageCause()
-                        instanceof EntityDamageByEntityEvent edmg) {
-
-                    Entity damager = edmg.getDamager();
-
-                    Bukkit.broadcast(
-                            Component.text(
-                                    "[DEBUG] Poison Damager = "
-                                            + damager.getType()
-                                            + " | "
-                                            + damager.getClass().getName(),
-                                    NamedTextColor.GOLD
-                            )
-                    );
                 }
                 return null;
 
@@ -1163,7 +1120,6 @@ public class DeathListener implements Listener {
         // Sudah pernah mati sama end crystal - hapus crystal, jangan meledak
         event.setCancelled(true);
         Location loc = crystal.getLocation().add(0.5, 0.5, 0.5);
-        event.setCancelled(true);
 
         crystal.remove();
 
@@ -1671,7 +1627,7 @@ public class DeathListener implements Listener {
 
         Bukkit.broadcast(
                 Component.text(
-                        "<pororo> " + player.getName() + " kelaperan jirr, nih gw kasih MBG!"
+                        "<Pororo> " + player.getName() + " kelaperan jirr, nih gw kasih MBG!"
                 )
         );
 
@@ -1783,8 +1739,6 @@ public class DeathListener implements Listener {
         EntityType.ZOMBIE,
         EntityType.ZOMBIE_VILLAGER
     );
-    // Set untuk throttle spider flee agar tidak spam tiap tick
-    private final Set<UUID> fleeingSpiders = new HashSet<>();
     // Set untuk throttle golem flower agar tidak spam
     private final Set<UUID> golemCooldown = new HashSet<>();
 
@@ -2050,21 +2004,6 @@ public class DeathListener implements Listener {
 
         if (!(event.getEntity().getShooter() instanceof Mob mob))
             return;
-        if (mob instanceof Ghast) {
-
-            Bukkit.broadcast(
-                    Component.text(
-                            "[DEBUG GHAST] deathUsed="
-                                    + gm.isDeathUsed(
-                                            Bukkit.getOnlinePlayers()
-                                                    .iterator()
-                                                    .next(),
-                                            "GHAST"
-                                    ),
-                            NamedTextColor.LIGHT_PURPLE
-                    )
-            );
-        }
 
         for (Player player : Bukkit.getOnlinePlayers()) {
 
@@ -2599,6 +2538,50 @@ public class DeathListener implements Listener {
             }
         }
     }
+
+    // ── Random Respawn dalam Border ───────────────────────────────────────────
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPlayerRespawn(PlayerRespawnEvent event) {
+        Player player = event.getPlayer();
+        if (!gm.isRunning() || !gm.isRegistered(player)) return;
+
+        Location center = gm.getBorderCenter();
+        double borderSize = gm.getBorderSize();
+        if (center == null) return;
+
+        World world = center.getWorld();
+        if (world == null) return;
+
+        Location spawnLoc = randomSpawnInBorder(world, center, borderSize);
+        event.setRespawnLocation(spawnLoc);
+    }
+
+    private final Random respawnRand = new Random();
+
+    /**
+     * Cari lokasi spawn random yang aman dalam border.
+     * Retry 30x sampai ketemu blok solid (bukan lava/air) di bawahnya.
+     */
+    private Location randomSpawnInBorder(World world, Location center, double borderSize) {
+        double half = (borderSize / 2.0) - 10; // buffer 10 blok dari tepi border
+
+        for (int attempt = 0; attempt < 30; attempt++) {
+            double x = center.getX() + (respawnRand.nextDouble() * 2 - 1) * half;
+            double z = center.getZ() + (respawnRand.nextDouble() * 2 - 1) * half;
+            int y = world.getHighestBlockYAt((int) x, (int) z);
+
+            Material below = world.getBlockAt((int) x, y, (int) z).getType();
+            if (below.isSolid() && below != Material.LAVA && below != Material.WATER) {
+                return new Location(world, x + 0.5, y + 1, z + 0.5);
+            }
+        }
+
+        // Fallback: spawn world
+        return world.getSpawnLocation().add(0.5, 1, 0.5);
+    }
+
+    // ── Cleanup ───────────────────────────────────────────────────────────────
 
     public void cleanupPlayer(UUID uuid) {
         frozenBoots.remove(uuid);
