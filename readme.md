@@ -66,7 +66,7 @@ Ketika `/startsolo` atau `/startglobal` dijalankan, plugin otomatis:
 
 ## Sistem Immunity
 
-Setelah player mati dengan suatu cara, mereka **tidak bisa mati dari cara yang sama lagi**. Setiap death key punya efek immunity unik — lihat [Death.md](Death.md) untuk detail lengkap per death key.
+Setelah player mati dengan suatu cara, mereka **tidak bisa mati dari cara yang sama lagi**. Setiap death key punya efek immunity unik — lihat [death.md](death.md) untuk detail lengkap per death key.
 
 ---
 
